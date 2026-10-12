@@ -13,14 +13,18 @@ FROM rocm/pytorch:rocm10.0_ubuntu26.04_py3.14_pytorch_release_2.13.0
 
 WORKDIR /app
 
-# Ensure non-interactive environment
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV MC3_INDEX_DIR=/app/index
 ENV MC2_OUTPUT_DIR=/app/output
 ENV MC3_MODELS_DIR=/models
 
-# Install application dependencies without replacing ROCm torch
+# Install system OCR tools (native Tesseract for Python 3.14 compatibility)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends tesseract-ocr && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install application dependencies (pure-python, Python 3.14 compatible)
 COPY app/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
@@ -33,7 +37,5 @@ COPY app/ /app/
 # Create required directories
 RUN mkdir -p /app/corpus /app/output /app/index
 
-# Start the GPU resident daemon upon container boot.
-# This pre-allocates model parameters in GPU VRAM (1-48 GiB band) and
-# serves queries through /tmp/mc3_daemon.sock in under 1 second.
+# Start GPU-resident daemon on container boot
 CMD ["python3", "/app/server.py"]

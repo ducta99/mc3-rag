@@ -74,19 +74,16 @@ class DocumentParser:
             return self._ocr_engine
         self._ocr_attempted = True
         try:
-            from rapidocr_onnxruntime import RapidOCR
-            self._ocr_engine = RapidOCR()
-            logger.info("Initialized RapidOCR engine successfully.")
+            import pytesseract
+            self._ocr_engine = "pytesseract"
+            logger.info("Initialized pytesseract engine successfully.")
         except Exception as e:
-            logger.warning("RapidOCR not available (%s). Trying pytesseract...", e)
             try:
-                import pytesseract
-                from PIL import Image
-                # quick test
-                self._ocr_engine = "pytesseract"
-                logger.info("Initialized pytesseract fallback.")
-            except Exception as e2:
-                logger.warning("OCR engines unavailable (%s). Images will have empty text.", e2)
+                from rapidocr_onnxruntime import RapidOCR
+                self._ocr_engine = RapidOCR()
+                logger.info("Initialized RapidOCR engine fallback.")
+            except Exception:
+                logger.warning("OCR engines unavailable. Images will have empty text.")
                 self._ocr_engine = None
         return self._ocr_engine
 
